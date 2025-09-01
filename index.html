@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Old-School Letter</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f7efe6;
+    --seal:#b94f5b;
+    --shadow: rgba(0,0,0,0.18);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial}
+  body{
+    background:
+      radial-gradient(circle at 10% 10%, rgba(255,240,220,0.25), transparent 10%),
+      linear-gradient(180deg,#f6e7d8 0%, #efe1d7 60%, #e8d7cd 100%);
+    display:flex;align-items:center;justify-content:center;padding:32px;
+  }
+
+  /* Stage */
+  .stage{width:min(720px,92vw); max-width:900px; position:relative; perspective:1200px;}
+
+  /* Envelope wrapper */
+  .envelope {
+    width:100%; max-width:640px; margin:0 auto; height:420px; position:relative;
+    transform-style:preserve-3d; transition:transform .9s cubic-bezier(.2,.9,.3,1);
+    cursor:pointer;
+  }
+
+  /* envelope body (paper) */
+  .env-body {
+    width:100%; height:100%; background:linear-gradient(180deg,#fffaf6,#fff5ef);
+    border-radius:8px; box-shadow: 0 18px 40px var(--shadow); position:relative; overflow:hidden;
+    border:1px solid rgba(0,0,0,0.04);
+  }
+
+  /* flap */
+  .env-flap {
+    position:absolute; left:0; right:0; top:0; height:52%;
+    background: linear-gradient(180deg,#eecfbd,#f6e0d0);
+    transform-origin: top center;
+    transition: transform .8s cubic-bezier(.2,.9,.3,1), box-shadow .25s;
+    z-index:6;
+    clip-path: polygon(0 0,50% 100%,100% 0); /* triangular flap */
+    display:flex; align-items:flex-end; justify-content:center;
+  }
+  .env-flap::after {
+    content:"";
+    width:120px; height:60px; background:linear-gradient(180deg,#f1c0b0,#e89f96);
+    border-radius:50% / 20%; transform:translateY(25%); opacity:.35;
+  }
+
+  /* envelope main content (paper inside) */
+  .env-inner {
+    position:absolute; inset:14% 5% 6% 5%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.98));
+    border-radius:6px; padding:34px 34px 20px 34px;
+    box-shadow: inset 0 -8px 20px rgba(0,0,0,0.03);
+    z-index:3;
+    overflow:auto;
+  }
+
+  /* old-school stamp */
+  .seal {
+    position:absolute; top:38px; left:40px; z-index:7;
+    width:74px; height:74px; border-radius:50%;
+    background: radial-gradient(circle at 30% 20%, #ffd6d3, #ffb0b0 45%, #b94f5b 70%);
+    box-shadow: 0 6px 18px rgba(0,0,0,.14);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:bold; color:#fff; font-family: "Great Vibes", cursive;
+    font-size:26px;
+    transform:rotate(-15deg);
+  }
+
+  /* the typed / cursive preview on envelope when closed */
+  .preview-text {
+    position:absolute; right:28px; bottom:28px; z-index:5;
+    font-family:"Great Vibes", cursive; font-size:22px; color:#5b4642; opacity:.95;
+  }
+
+  /* OPEN state */
+  .envelope.open .env-flap {
+    transform: rotateX(-180deg) translateY(-2%);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.15);
+  }
+  .envelope.open {
+    transform: translateY(-12px);
+  }
+
+  /* modal that shows the GIF */
+  .modal {
+    position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
+    background: rgba(10,10,12,0.45); opacity:0; pointer-events:none; transition:opacity .25s;
+    z-index:40;
+  }
+  .modal.show { opacity:1; pointer-events:auto; }
+
+  .modal-card {
+    width:min(880px,94vw); max-height:88vh; border-radius:10px;
+    background: linear-gradient(180deg,#fffaf3,#fff6f0);
+    padding:18px; box-shadow: 0 30px 80px rgba(0,0,0,0.45);
+    display:flex; align-items:center; justify-content:center; position:relative;
+  }
+
+  .modal-card img { max-width:100%; max-height:76vh; border-radius:8px; display:block; cursor:pointer; }
+
+  .close {
+    position:absolute; top:10px; right:12px; background:transparent; border:0; font-size:18px; cursor:pointer;
+  }
+
+  /* instructions small */
+  .hint { margin-top:10px; color:#5a4b48; font-size:13px; text-align:center; }
+
+  /* footer note */
+  .footer {
+    margin-top:18px; text-align:center; color:#5a4b48; font-size:13px;
+  }
+
+  /* small responsive adjustments */
+  @media (max-width:520px){
+    .envelope{height:340px}
+    .env-inner{padding:20px}
+    .seal{width:60px;height:60px;font-size:20px;left:18px;top:28px}
+    .preview-text{font-size:18px;right:18px;bottom:18px}
+  }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div id="envelope" class="envelope" role="button" tabindex="0" aria-label="Open letter">
+      <div class="env-body" aria-hidden="true">
+        <div class="env-flap"></div>
+
+        <div class="env-inner" aria-hidden="true">
+          <!-- A decorative preview of the letter on the paper -->
+          <div style="font-family:'Great Vibes', cursive; font-size:28px; color:#6b4f4a;">Dear Zabu,</div>
+          <div style="margin-top:18px; color:#4b3f3c; line-height:1.6; font-size:15px; max-height:210px; overflow:hidden;">
+            Life can be strange sometimes. Some people come into our lives and become a part of our days so naturally that we forget what things were like before them. You’ve been that for me.
+            <br><br>I know lately you’ve been carrying storms inside you. I can’t take away all your struggles, but if life ever feels too heavy, I hope you remember there’s someone who quietly wants to see you win every battle...
+          </div>
+          <div class="signature" style="margin-top:22px; font-family:'Great Vibes', cursive; font-size:18px; color:#6b4f4a;">— prostátēs</div>
+        </div>
+
+        <div class="seal" aria-hidden="true">✳</div>
+        <div class="preview-text">A Letter for Zabu</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal (hidden by default) - shows GIF -->
+  <div id="modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-card" role="document">
+      <button id="closeBtn" class="close" aria-label="Close letter">✕</button>
+      <div style="text-align:center">
+        <img id="gifImg" src="" alt="Open letter animation — click to download PDF" />
+        <div class="hint">Tap the GIF to download the full letter (PDF).</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/*
+  IMPORTANT:
+   - Put your assets (gif and pdf) where the URLs below point or edit the strings.
+   - If you put assets in repo root: GIF_URL = 'letter.gif'; PDF_URL = 'letter.pdf';
+*/
+const GIF_URL = 'letter.gif';   // <-- change to your uploaded gif path
+const PDF_URL = 'letter.pdf';   // <-- change to your uploaded pdf path (same origin recommended)
+
+const envelope = document.getElementById('envelope');
+const modal = document.getElementById('modal');
+const gifImg = document.getElementById('gifImg');
+const closeBtn = document.getElementById('closeBtn');
+
+gifImg.src = GIF_URL;
+
+// open envelope: animate and show modal
+function openEnvelope() {
+  envelope.classList.add('open');
+  setTimeout(()=>{ showModal(); }, 600); // let the flap rotate then show modal
+}
+function showModal() {
+  modal.classList.add('show');
+  modal.setAttribute('aria-hidden','false');
+}
+function closeModal() {
+  modal.classList.remove('show');
+  modal.setAttribute('aria-hidden','true');
+  // optional: close envelope back after a short delay
+  setTimeout(()=> envelope.classList.remove('open'), 220);
+}
+
+// click handlers
+envelope.addEventListener('click', openEnvelope);
+envelope.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') openEnvelope(); });
+
+closeBtn.addEventListener('click', (e)=>{ e.stopPropagation(); closeModal(); });
+modal.addEventListener('click', (e)=>{ if(e.target===modal) closeModal(); });
+
+// GIF click: fetch PDF as blob then force-download
+async function downloadPDF(url) {
+  try {
+    // show quick visual feedback
+    gifImg.style.filter = 'brightness(.9) saturate(.9)'; // subtle
+    const resp = await fetch(url, {mode: 'cors'});
+    if (!resp.ok) throw new Error('Network response not ok');
+    const blob = await resp.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+
+    // try to determine filename from header or url
+    let filename = 'letter.pdf';
+    try {
+      const cd = resp.headers.get('Content-Disposition') || '';
+      const match = cd.match(/filename="?(.+?)"?($|;)/);
+      if (match) filename = match[1];
+      else {
+        // fallback to last part of URL
+        const urlParts = url.split('/');
+        if (urlParts.length) filename = urlParts[urlParts.length-1] || filename;
+      }
+    } catch(e) { /* ignore */ }
+
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(blobUrl);
+    gifImg.style.filter = '';
+  } catch (err) {
+    gifImg.style.filter = '';
+    alert('Could not download file automatically. Opening file in new tab instead.');
+    // fallback: open PDF in new tab/window
+    window.open(url, '_blank', 'noopener');
+  }
+}
+
+gifImg.addEventListener('click', (e)=>{
+  e.stopPropagation();
+  downloadPDF(PDF_URL);
+});
+</script>
+</body>
+</html>
